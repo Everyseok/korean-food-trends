@@ -1,0 +1,58 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// status values: "active" | "cooling" | "archived"
+model FoodTrend {
+  id               String            @id @default(cuid())
+  slug             String            @unique
+  name             String
+  description      String
+  inventorName     String            @default("")
+  imageUrl         String
+  trendStartYear   Int               @default(2020)
+  trendStartMonth  Int               @default(1)
+  status           String            @default("active")
+  sortOrder        Int               @default(0)
+  visible          Boolean           @default(true)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  stores           StoreSubmission[]
+}
+
+// moderationStatus values: "published" | "pending_enrichment" | "pending_llm_check" | "flagged"
+model StoreSubmission {
+  id                   String    @id @default(cuid())
+  foodTrendId          String
+  foodTrend            FoodTrend @relation(fields: [foodTrendId], references: [id], onDelete: Cascade)
+  sourceUrl            String
+  sourcePlatform       String    @default("naver_map")
+  storeName            String
+  address              String?
+  businessHours        String?
+  thumbnailUrl         String?
+  metadataJson         String?
+  moderationStatus     String    @default("published")
+  submitterFingerprint String
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@unique([foodTrendId, sourceUrl])
+}
+
+model DailySubmissionQuota {
+  id          String   @id @default(cuid())
+  fingerprint String
+  dateKey     String
+  count       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([fingerprint, dateKey])
+}
