@@ -14,11 +14,12 @@ const STATUS = {
 
 interface Props {
   trend: FoodTrendData;
-  onOpenDetail: () => void;
+  isExpanded: boolean;
+  onToggle: () => void;
   onAddStore: () => void;
 }
 
-export function FoodTrendCard({ trend, onOpenDetail, onAddStore }: Props) {
+export function FoodTrendCard({ trend, isExpanded, onToggle, onAddStore }: Props) {
   const [hovered, setHovered] = useState(false);
   const status = STATUS[trend.status] ?? STATUS.archived;
   const monthLabel = `'${String(trend.trendStartYear).slice(2)}.${String(trend.trendStartMonth).padStart(2, '0')}`;
@@ -28,11 +29,14 @@ export function FoodTrendCard({ trend, onOpenDetail, onAddStore }: Props) {
       className="relative cursor-pointer"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      onClick={onOpenDetail}
+      onClick={onToggle}
     >
       {/* ── Image ─────────────────────────────────────────── */}
       <div
-        className="relative w-full overflow-hidden bg-[#EBEBF0]"
+        className={cn(
+          'relative w-full overflow-hidden bg-[#EBEBF0] transition-all duration-300',
+          isExpanded && 'ring-1 ring-[#C7C7CC]/60'
+        )}
         style={{ borderRadius: '13px', aspectRatio: '1 / 1' }}
       >
         <Image
@@ -100,8 +104,13 @@ export function FoodTrendCard({ trend, onOpenDetail, onAddStore }: Props) {
           {trend.name}
         </h2>
 
-        {/* Description */}
-        <p className="mt-[3px] text-[12px] text-[#8E8E93] leading-[1.58] line-clamp-2">
+        {/* Description — unclamped when expanded */}
+        <p
+          className={cn(
+            'mt-[3px] text-[12px] text-[#8E8E93] leading-[1.58] transition-all duration-300',
+            !isExpanded && 'line-clamp-2'
+          )}
+        >
           {trend.description}
         </p>
       </div>

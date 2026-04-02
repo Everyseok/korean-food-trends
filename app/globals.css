@@ -20,11 +20,11 @@ body {
 }
 
 .timeline-hero-title {
-  font-size: clamp(2.6rem, 6.5vw, 4.25rem);
+  font-size: clamp(1.5rem, 3.8vw, 2.4rem);
   font-weight: 600;
   color: #1D1D1F;
-  letter-spacing: -0.025em;
-  line-height: 1.06;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
 }
 
 /* ── Timeline scrollbar — ultra-thin ────────────────────── */

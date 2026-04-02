@@ -1,8 +1,7 @@
 'use client';
 
-import { useOptimistic, useTransition, useState } from 'react';
+import { useOptimistic, useTransition, useState, useRef, useEffect } from 'react';
 import { FoodTrendCard } from './FoodTrendCard';
-import { FoodTrendDetailModal } from './FoodTrendDetailModal';
 import { AddStoreModal } from './AddStoreModal';
 import { StoreList } from './StoreList';
 import { SubmissionToast } from './SubmissionToast';
@@ -18,10 +17,18 @@ type TimelineItem =
   | { type: 'trend'; trend: FoodTrendData };
 
 export function FoodTrendTimeline({ trends }: Props) {
-  const [selectedTrend, setSelectedTrend] = useState<FoodTrendData | null>(null);
+  const [expandedTrendId, setExpandedTrendId] = useState<string | null>(null);
   const [addingForTrend, setAddingForTrend] = useState<FoodTrendData | null>(null);
   const [toast, setToast] = useState<ToastState>(null);
   const [, startTransition] = useTransition();
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to the right (latest trends) on first render
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
+    }
+  }, []);
 
   const [optimisticTrends, addOptimisticStore] = useOptimistic(
     trends,
@@ -76,35 +83,23 @@ export function FoodTrendTimeline({ trends }: Props) {
     <div className="bg-[#F5F5F7] min-h-screen">
 
       {/* ── Hero ─────────────────────────────────────────────── */}
-      <header className="pt-[96px] pb-16 px-6 select-none">
-        <div className="max-w-lg mx-auto text-center">
-          <p className="timeline-eyebrow block mb-5">
+      <header className="pt-10 pb-5 px-6 select-none">
+        <div className="text-center">
+          <p className="timeline-eyebrow block mb-3">
             K-Food Trends
           </p>
-          <h1 className="timeline-hero-title">
-            대유행은<br />어디까지 갈까?
+          <h1 className="timeline-hero-title whitespace-nowrap">
+            대유행은 어디까지 갈까?
           </h1>
-          <p className="mt-5 text-[16px] leading-[1.7] text-[#6E6E73] max-w-xs mx-auto">
-            2020년부터 지금까지,<br />한국을 달군 음식 트렌드.
+          <p className="mt-3 text-[12px] leading-[1.6] text-[#AEAEB2]">
+            2020년부터 지금까지, 한국을 달군 음식 트렌드.
           </p>
-        </div>
-        {/* Decorative axis */}
-        <div className="mt-14 flex items-center justify-center gap-3.5">
-          <div className="h-px w-10 bg-[#E5E5EA]" />
-          <div className="w-[3px] h-[3px] rounded-full bg-[#D1D1D6]" />
-          <div className="h-px w-10 bg-[#E5E5EA]" />
         </div>
       </header>
 
-      {/* ── Scroll hint label ────────────────────────────────── */}
-      <div className="flex justify-center mb-6">
-        <p className="text-[10px] font-medium tracking-[0.15em] text-[#C7C7CC] uppercase select-none">
-          2020 →
-        </p>
-      </div>
-
       {/* ── Timeline ─────────────────────────────────────────── */}
       <div
+        ref={scrollRef}
         className="timeline-scroll overflow-x-auto"
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
@@ -162,19 +157,21 @@ export function FoodTrendTimeline({ trends }: Props) {
 
               /* ── Trend node ── */
               const trend = item.trend;
+              const isExpanded = expandedTrendId === trend.id;
               return (
                 <div
                   key={trend.id}
                   className="relative flex-shrink-0"
                   style={{ width: '228px', marginRight: '18px' }}
                 >
-                  {/* Rail dot */}
+                  {/* Rail dot — filled when expanded */}
                   <div
-                    className="absolute z-10 rounded-full bg-white"
+                    className="absolute z-10 rounded-full transition-all duration-200"
                     style={{
                       width: '7px',
                       height: '7px',
-                      border: '1.5px solid #C7C7CC',
+                      background: isExpanded ? '#6E6E73' : 'white',
+                      border: `1.5px solid ${isExpanded ? '#6E6E73' : '#C7C7CC'}`,
                       top: '30.5px',
                       left: '50%',
                       transform: 'translateX(-50%)',
@@ -195,7 +192,10 @@ export function FoodTrendTimeline({ trends }: Props) {
                   <div style={{ paddingTop: '58px' }}>
                     <FoodTrendCard
                       trend={trend}
-                      onOpenDetail={() => setSelectedTrend(trend)}
+                      isExpanded={isExpanded}
+                      onToggle={() =>
+                        setExpandedTrendId(prev => (prev === trend.id ? null : trend.id))
+                      }
                       onAddStore={() => setAddingForTrend(trend)}
                     />
                     <StoreList
@@ -210,18 +210,7 @@ export function FoodTrendTimeline({ trends }: Props) {
         </div>
       </div>
 
-      {/* ── Modals ───────────────────────────────────────────── */}
-      {selectedTrend && (
-        <FoodTrendDetailModal
-          trend={selectedTrend}
-          onClose={() => setSelectedTrend(null)}
-          onAddStore={() => {
-            setAddingForTrend(selectedTrend);
-            setSelectedTrend(null);
-          }}
-        />
-      )}
-
+      {/* ── Add Store Modal ───────────────────────────────────── */}
       {addingForTrend && (
         <AddStoreModal
           trend={addingForTrend}
