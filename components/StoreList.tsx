@@ -19,7 +19,7 @@ export function StoreList({ stores, onAddStore }: Props) {
       {/* Header row */}
       <div className="flex items-center justify-between mb-1.5">
         <span className="text-[10px] font-semibold tracking-[0.14em] uppercase text-[#C7C7CC]">
-          판매점
+          링크 등록{all.length > 0 ? ` · ${all.length}` : ''}
         </span>
         <button
           onClick={onAddStore}
@@ -32,7 +32,6 @@ export function StoreList({ stores, onAddStore }: Props) {
       </div>
 
       {all.length === 0 ? (
-        /* Minimal empty state */
         <button
           onClick={onAddStore}
           className="w-full flex items-center gap-2 py-2 px-0 text-left group"
@@ -41,7 +40,7 @@ export function StoreList({ stores, onAddStore }: Props) {
             <Plus className="w-2.5 h-2.5 text-[#D1D1D6] group-hover:text-[#AEAEB2] transition-colors duration-150" />
           </div>
           <span className="text-[11px] text-[#C7C7CC] group-hover:text-[#8E8E93] transition-colors duration-150">
-            첫 판매점 등록
+            첫 링크 등록
           </span>
         </button>
       ) : (

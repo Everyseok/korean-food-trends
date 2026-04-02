@@ -94,7 +94,7 @@ export function FoodTrendCard({ trend, isExpanded, onToggle, onAddStore }: Props
           {trend.stores.length > 0 && (
             <>
               <span className="text-[10px] text-[#D1D1D6]">·</span>
-              <span className="text-[10px] text-[#C7C7CC]">{trend.stores.length}곳</span>
+              <span className="text-[10px] text-[#C7C7CC]">링크 {trend.stores.length}</span>
             </>
           )}
         </div>

@@ -1,9 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-import { Eye, EyeOff, Edit2, Plus, Save, X } from 'lucide-react';
+import { Eye, EyeOff, Edit2, Plus, Save, X, Link, ChevronDown, ChevronUp } from 'lucide-react';
 import { adminCreateTrend, adminToggleVisible, adminUpdateTrend } from '@/actions/admin-trends';
 import { cn } from '@/lib/utils';
+
+interface TrendStore {
+  id: string;
+  storeName: string;
+  sourceUrl: string;
+  moderationStatus: string;
+  createdAt: string;
+}
 
 interface TrendRow {
   id: string;
@@ -18,6 +26,7 @@ interface TrendRow {
   sortOrder: number;
   visible: boolean;
   storeCount: number;
+  stores: TrendStore[];
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -55,6 +64,7 @@ const EMPTY_FORM: FormState = {
 export function AdminTrendsClient({ trends: initial }: { trends: TrendRow[] }) {
   const [trends, setTrends] = useState(initial);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [expandedLinksId, setExpandedLinksId] = useState<string | null>(null);
   const [showNew, setShowNew] = useState(false);
   const [editForm, setEditForm] = useState<FormState>({
     slug: '', name: '', description: '', inventorName: '', imageUrl: '',
@@ -64,7 +74,6 @@ export function AdminTrendsClient({ trends: initial }: { trends: TrendRow[] }) {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
 
-  // Get token from cookie client-side
   const getToken = () => {
     if (typeof document === 'undefined') return '';
     return document.cookie.split(';').find(c => c.trim().startsWith('admin_token='))?.split('=')[1]?.trim() ?? '';
@@ -145,9 +154,31 @@ export function AdminTrendsClient({ trends: initial }: { trends: TrendRow[] }) {
         <label className={labelClass}>발명자 (선택)</label>
         <input className={fieldClass} placeholder="비워두기 가능" value={form.inventorName} onChange={e => setForm({ ...form, inventorName: e.target.value })} />
       </div>
+      {/* Image URL + preview */}
       <div>
         <label className={labelClass}>이미지 URL</label>
-        <input className={fieldClass} value={form.imageUrl} onChange={e => setForm({ ...form, imageUrl: e.target.value })} />
+        <input
+          className={fieldClass}
+          value={form.imageUrl}
+          onChange={e => setForm({ ...form, imageUrl: e.target.value })}
+          placeholder="https://..."
+        />
+        {form.imageUrl && (
+          <div className="mt-2 flex items-start gap-3">
+            <div className="w-20 h-20 rounded-xl overflow-hidden bg-[#E5E5EA] flex-shrink-0">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={form.imageUrl}
+                alt="preview"
+                className="w-full h-full object-cover"
+                onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+              />
+            </div>
+            <p className="text-[11px] text-[#AEAEB2] leading-snug mt-1">
+              이미지 URL을 붙여넣으면<br />바로 미리보기가 표시됩니다.
+            </p>
+          </div>
+        )}
       </div>
       <div className="grid grid-cols-3 gap-3">
         <div>
@@ -227,7 +258,16 @@ export function AdminTrendsClient({ trends: initial }: { trends: TrendRow[] }) {
       <div className="space-y-2">
         {trends.map(t => (
           <div key={t.id} className="bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.04)] overflow-hidden">
+            {/* Trend row */}
             <div className="flex items-center gap-3 px-4 py-3">
+              {/* Thumbnail */}
+              <div className="w-10 h-10 rounded-xl overflow-hidden bg-[#F5F5F7] flex-shrink-0">
+                {t.imageUrl && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={t.imageUrl} alt="" className="w-full h-full object-cover" />
+                )}
+              </div>
+
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="text-[15px] font-semibold text-[#1D1D1F]">{t.name}</span>
@@ -243,9 +283,29 @@ export function AdminTrendsClient({ trends: initial }: { trends: TrendRow[] }) {
                   {!t.visible && <span className="text-[10px] text-[#AEAEB2]">숨김</span>}
                 </div>
                 <p className="text-[12px] text-[#8E8E93] mt-0.5 truncate">{t.description}</p>
-                <span className="text-[11px] text-[#C7C7CC]">판매점 {t.storeCount}개 · {t.slug}</span>
+                <span className="text-[11px] text-[#C7C7CC]">{t.slug}</span>
               </div>
+
               <div className="flex items-center gap-1.5 flex-shrink-0">
+                {/* Links toggle */}
+                <button
+                  onClick={() => setExpandedLinksId(prev => prev === t.id ? null : t.id)}
+                  className={cn(
+                    'flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium transition-colors',
+                    expandedLinksId === t.id
+                      ? 'bg-[#E5E5EA] text-[#1D1D1F]'
+                      : 'text-[#8E8E93] hover:bg-[#F5F5F7]'
+                  )}
+                  title="등록된 링크 보기"
+                >
+                  <Link className="w-3 h-3" />
+                  <span>{t.storeCount}</span>
+                  {expandedLinksId === t.id
+                    ? <ChevronUp className="w-3 h-3" />
+                    : <ChevronDown className="w-3 h-3" />
+                  }
+                </button>
+
                 <button onClick={() => toggleVisible(t)} className="p-1.5 rounded-lg hover:bg-[#F5F5F7] transition-colors" title={t.visible ? '숨기기' : '공개'}>
                   {t.visible ? <Eye className="w-4 h-4 text-[#6E6E73]" /> : <EyeOff className="w-4 h-4 text-[#AEAEB2]" />}
                 </button>
@@ -254,6 +314,47 @@ export function AdminTrendsClient({ trends: initial }: { trends: TrendRow[] }) {
                 </button>
               </div>
             </div>
+
+            {/* Submitted links — for manual verification */}
+            {expandedLinksId === t.id && (
+              <div className="border-t border-[#F5F5F7] px-4 py-3">
+                {t.stores.length === 0 ? (
+                  <p className="text-[12px] text-[#C7C7CC]">등록된 링크가 없습니다.</p>
+                ) : (
+                  <div className="space-y-1.5">
+                    {t.stores.map((s, idx) => (
+                      <div key={s.id} className="flex items-start gap-2">
+                        <span className="text-[10px] text-[#C7C7CC] w-4 pt-[2px] flex-shrink-0">{idx + 1}</span>
+                        <div className="flex-1 min-w-0">
+                          <a
+                            href={s.sourceUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[12px] text-[#0071E3] hover:underline truncate block"
+                          >
+                            {s.sourceUrl}
+                          </a>
+                          {s.storeName && (
+                            <span className="text-[11px] text-[#8E8E93]">{s.storeName}</span>
+                          )}
+                          <span className="text-[10px] text-[#C7C7CC] ml-1">
+                            · {new Date(s.createdAt).toLocaleDateString('ko-KR')}
+                          </span>
+                        </div>
+                        <span className={cn(
+                          'text-[10px] px-1.5 py-0.5 rounded-full flex-shrink-0',
+                          s.moderationStatus === 'published'
+                            ? 'bg-emerald-50 text-emerald-600'
+                            : 'bg-amber-50 text-amber-600'
+                        )}>
+                          {s.moderationStatus === 'published' ? '공개' : s.moderationStatus}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             {editingId === t.id && (
               <div className="px-4 pb-4">

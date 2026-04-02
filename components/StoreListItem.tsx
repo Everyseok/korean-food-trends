@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
 import { MapPin, Clock, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { StoreSubmissionData } from '@/types';
@@ -14,7 +13,8 @@ interface Props {
 export function StoreListItem({ store, isOptimistic }: Props) {
   const [expanded, setExpanded] = useState(false);
 
-  const isPending = store.storeName === '등록 중...' || store.storeName === '상호명 확인 중';
+  const isPending = store.storeName === '등록 중...';
+  const displayName = store.storeName || '네이버 지도';
 
   return (
     <div
@@ -42,7 +42,7 @@ export function StoreListItem({ store, isOptimistic }: Props) {
           isPending && 'italic'
         )}
       >
-        {store.storeName}
+        {displayName}
       </p>
 
       {/* Expanded detail */}
@@ -53,18 +53,6 @@ export function StoreListItem({ store, isOptimistic }: Props) {
         )}
         style={{ transitionTimingFunction: 'cubic-bezier(0.25,0.46,0.45,0.94)' }}
       >
-        {store.thumbnailUrl && (
-          <div className="relative w-full h-24 rounded-lg overflow-hidden bg-[#F2F2F7] mb-2">
-            <Image
-              src={store.thumbnailUrl}
-              alt={store.storeName}
-              fill
-              className="object-cover"
-              unoptimized
-            />
-          </div>
-        )}
-
         {store.address && (
           <div className="flex items-start gap-1.5 mb-1">
             <MapPin className="w-3 h-3 text-[#AEAEB2] mt-[1px] flex-shrink-0" />
@@ -79,10 +67,6 @@ export function StoreListItem({ store, isOptimistic }: Props) {
           </div>
         )}
 
-        {!store.address && !store.businessHours && !isPending && (
-          <p className="text-[11px] text-[#C7C7CC] mb-1">상세 정보 준비 중</p>
-        )}
-
         <a
           href={store.sourceUrl}
           target="_blank"
@@ -91,7 +75,7 @@ export function StoreListItem({ store, isOptimistic }: Props) {
           onClick={e => e.stopPropagation()}
         >
           <ExternalLink className="w-2.5 h-2.5" />
-          네이버 지도
+          네이버 지도에서 보기
         </a>
       </div>
     </div>

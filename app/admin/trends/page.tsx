@@ -6,7 +6,6 @@ import { AdminTrendsClient } from '@/components/admin/AdminTrendsClient';
 export const dynamic = 'force-dynamic';
 
 export default async function AdminTrendsPage() {
-  // Next.js 15: cookies() is async
   const cookieStore = await cookies();
   const token = cookieStore.get('admin_token')?.value;
   const envSecret = process.env.ADMIN_SECRET ?? 'admin-dev-secret';
@@ -18,7 +17,19 @@ export default async function AdminTrendsPage() {
   const db = await getPrisma();
   const trends = await db.foodTrend.findMany({
     orderBy: [{ trendStartYear: 'asc' }, { trendStartMonth: 'asc' }, { sortOrder: 'asc' }],
-    include: { _count: { select: { stores: true } } },
+    include: {
+      _count: { select: { stores: true } },
+      stores: {
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          storeName: true,
+          sourceUrl: true,
+          moderationStatus: true,
+          createdAt: true,
+        },
+      },
+    },
   });
 
   const serialized = trends.map(t => ({
@@ -34,6 +45,13 @@ export default async function AdminTrendsPage() {
     sortOrder: t.sortOrder,
     visible: t.visible,
     storeCount: t._count.stores,
+    stores: t.stores.map(s => ({
+      id: s.id,
+      storeName: s.storeName,
+      sourceUrl: s.sourceUrl,
+      moderationStatus: s.moderationStatus,
+      createdAt: s.createdAt.toISOString(),
+    })),
   }));
 
   return (

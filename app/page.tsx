@@ -15,7 +15,7 @@ export default async function HomePage() {
     ],
     include: {
       stores: {
-        where: { moderationStatus: { in: ['published', 'pending_enrichment'] } },
+        where: { moderationStatus: 'published' },
         orderBy: { createdAt: 'desc' },
       },
     },
