@@ -1,37 +1,27 @@
 import { PrismaClient } from '@prisma/client';
 import { PrismaD1 } from '@prisma/adapter-d1';
-import type { D1Database } from './cloudflare-env';
+import { getCloudflareContext } from '@opennextjs/cloudflare';
+import { cache } from 'react';
 
 /**
- * Returns a PrismaClient for the current runtime:
- *  - Local dev  → SQLite via DATABASE_URL
- *  - Cloudflare Workers → Cloudflare D1 via env.DB binding
- *
- * Usage: `const db = await getPrisma();`
+ * Returns a request-scoped PrismaClient (memoized via React cache):
+ *  - Cloudflare Workers (prod + cf:dev) → D1 adapter via getCloudflareContext()
+ *  - Local next dev → SQLite via DATABASE_URL
  */
-export async function getPrisma(): Promise<PrismaClient> {
-  // Local dev: DATABASE_URL is set (points to ./dev.db)
-  if (process.env.DATABASE_URL) {
-    return _getLocalPrisma();
-  }
-
-  // Cloudflare Workers runtime — use D1 adapter
+export const getPrisma = cache((): PrismaClient => {
   try {
-    const { getCloudflareContext } = await import('@opennextjs/cloudflare');
-    const ctx = await getCloudflareContext({ async: true });
-    const d1 = (ctx.env as Record<string, unknown>).DB as D1Database | undefined;
-    if (d1) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { env } = getCloudflareContext() as any;
+    if (env?.DB) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const adapter = new PrismaD1(d1 as any);
+      const adapter = new PrismaD1(env.DB as any);
       return new PrismaClient({ adapter });
     }
   } catch {
-    // Not in Workers context (build time, test, etc.)
+    // Not in Cloudflare Workers context — fall through to local SQLite
   }
-
-  // Final fallback
   return _getLocalPrisma();
-}
+});
 
 // ─── Local / dev singleton ────────────────────────────────────────────────────
 
