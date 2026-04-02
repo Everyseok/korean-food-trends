@@ -1,13 +1,13 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { prisma } from '@/lib/prisma';
+import { getPrisma } from '@/lib/prisma';
 import { AdminTrendsClient } from '@/components/admin/AdminTrendsClient';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminTrendsPage() {
-  // Auth check via cookie
-  const cookieStore = cookies();
+  // Next.js 15: cookies() is async
+  const cookieStore = await cookies();
   const token = cookieStore.get('admin_token')?.value;
   const envSecret = process.env.ADMIN_SECRET ?? 'admin-dev-secret';
 
@@ -15,7 +15,8 @@ export default async function AdminTrendsPage() {
     redirect('/admin/login');
   }
 
-  const trends = await prisma.foodTrend.findMany({
+  const db = await getPrisma();
+  const trends = await db.foodTrend.findMany({
     orderBy: [{ trendStartYear: 'asc' }, { trendStartMonth: 'asc' }, { sortOrder: 'asc' }],
     include: { _count: { select: { stores: true } } },
   });

@@ -1,22 +1,33 @@
 {
+  // Wrangler v4 config — https://developers.cloudflare.com/workers/wrangler/configuration/
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "korean-food-trends",
   "main": ".open-next/worker.js",
-  "compatibility_date": "2025-01-01",
+  "compatibility_date": "2025-03-01",
   "compatibility_flags": ["nodejs_compat"],
+
+  // Static assets (Next.js public dir + _next/static)
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   },
+
+  // Cloudflare D1 — run `npx wrangler d1 create korean-food-trends-db` to get the ID
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "korean-food-trends-db",
-      // Replace with your actual D1 database ID after: npx wrangler d1 create korean-food-trends-db
-      "database_id": "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+      "database_id": "ed2d3fd9-4bb8-4c04-bef9-785e60cd5828"
     }
   ],
+
+  // Non-secret vars (override with Cloudflare Dashboard > Workers > Settings for production)
   "vars": {
-    "ADMIN_SECRET": "REPLACE_WITH_STRONG_SECRET"
+    "NODE_ENV": "production"
+  },
+
+  // Observability
+  "observability": {
+    "enabled": true
   }
 }

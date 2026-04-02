@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma';
+import { getPrisma } from '@/lib/prisma';
 
 const MAX_DAILY = 5;
 
@@ -11,8 +11,9 @@ function getKSTDateKey(): string {
 export async function checkRateLimit(
   fingerprint: string
 ): Promise<{ allowed: boolean; remaining: number }> {
+  const db = await getPrisma();
   const dateKey = getKSTDateKey();
-  const quota = await prisma.dailySubmissionQuota.findUnique({
+  const quota = await db.dailySubmissionQuota.findUnique({
     where: { fingerprint_dateKey: { fingerprint, dateKey } },
   });
   const count = quota?.count ?? 0;
@@ -20,8 +21,9 @@ export async function checkRateLimit(
 }
 
 export async function incrementQuota(fingerprint: string): Promise<void> {
+  const db = await getPrisma();
   const dateKey = getKSTDateKey();
-  await prisma.dailySubmissionQuota.upsert({
+  await db.dailySubmissionQuota.upsert({
     where: { fingerprint_dateKey: { fingerprint, dateKey } },
     create: { fingerprint, dateKey, count: 1 },
     update: { count: { increment: 1 } },

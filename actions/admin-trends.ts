@@ -1,23 +1,8 @@
 'use server';
 
-import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
-import { prisma } from '@/lib/prisma';
-
-function checkAdminAuth(): boolean {
-  const h = headers();
-  const secret = h.get('x-admin-secret');
-  const cookie = h.get('cookie') ?? '';
-  const envSecret = process.env.ADMIN_SECRET ?? 'admin-dev-secret';
-  // Check either header or cookie value
-  const fromCookie = cookie
-    .split(';')
-    .find(c => c.trim().startsWith('admin_token='))
-    ?.split('=')[1]
-    ?.trim();
-  return secret === envSecret || fromCookie === envSecret;
-}
+import { getPrisma } from '@/lib/prisma';
 
 export async function verifyAdminToken(token: string): Promise<boolean> {
   const envSecret = process.env.ADMIN_SECRET ?? 'admin-dev-secret';
@@ -52,8 +37,9 @@ export async function adminCreateTrend(
   if (!parsed.success) {
     return { success: false, error: parsed.error.errors[0].message };
   }
+  const db = await getPrisma();
   try {
-    await prisma.foodTrend.create({ data: parsed.data });
+    await db.foodTrend.create({ data: parsed.data });
     revalidatePath('/');
     revalidatePath('/admin/trends');
     return { success: true };
@@ -74,7 +60,8 @@ export async function adminUpdateTrend(
   if (!parsed.success) {
     return { success: false, error: parsed.error.errors[0].message };
   }
-  await prisma.foodTrend.update({ where: { id }, data: parsed.data });
+  const db = await getPrisma();
+  await db.foodTrend.update({ where: { id }, data: parsed.data });
   revalidatePath('/');
   revalidatePath('/admin/trends');
   return { success: true };
@@ -88,11 +75,9 @@ export async function adminToggleVisible(
   if (!(await verifyAdminToken(adminToken))) {
     return { success: false, error: '인증 실패' };
   }
-  await prisma.foodTrend.update({ where: { id }, data: { visible } });
+  const db = await getPrisma();
+  await db.foodTrend.update({ where: { id }, data: { visible } });
   revalidatePath('/');
   revalidatePath('/admin/trends');
   return { success: true };
 }
-
-// Keep checkAdminAuth exported so it can be used if needed
-export { checkAdminAuth };

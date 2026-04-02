@@ -1,23 +1,43 @@
 /**
- * Cloudflare Workers environment bindings.
- * Used for D1 database access in production.
+ * Cloudflare Workers runtime environment bindings.
+ * Available via: const { env } = await getCloudflareContext({ async: true });
  *
- * TODO: When deploying to Cloudflare Workers with D1, update prisma.ts to use
- * the Prisma D1 adapter:
- *   import { PrismaD1 } from '@prisma/adapter-d1';
- *   const adapter = new PrismaD1(env.DB);
- *   const prisma = new PrismaClient({ adapter });
+ * ADMIN_SECRET must be set as an encrypted secret via:
+ *   Cloudflare Dashboard → Workers → Settings → Environment Variables
+ *   or: npx wrangler secret put ADMIN_SECRET
  */
 
-// Cloudflare-specific types (not available in Node.js TypeScript environment)
-// These are declared here to avoid build errors; they will be resolved at
-// runtime by the Cloudflare Workers environment.
-type D1Database = unknown;
-type Fetcher = unknown;
+// Cloudflare Workers global types (not in @types/node)
+// The actual implementations are provided by the Cloudflare runtime.
+export interface D1Database {
+  prepare(query: string): D1PreparedStatement;
+  batch<T = unknown>(statements: D1PreparedStatement[]): Promise<D1Result<T>[]>;
+  exec(query: string): Promise<D1ExecResult>;
+}
+
+interface D1PreparedStatement {
+  bind(...values: unknown[]): D1PreparedStatement;
+  first<T = unknown>(colName?: string): Promise<T | null>;
+  run<T = unknown>(): Promise<D1Result<T>>;
+  all<T = unknown>(): Promise<D1Result<T>>;
+  raw<T = unknown[]>(): Promise<T[]>;
+}
+
+interface D1Result<T = unknown> {
+  results: T[];
+  success: boolean;
+  meta: Record<string, unknown>;
+  error?: string;
+}
+
+interface D1ExecResult {
+  count: number;
+  duration: number;
+}
 
 export interface CloudflareEnv {
   DB: D1Database;
-  ASSETS: Fetcher;
+  ASSETS: { fetch: typeof fetch };
+  NODE_ENV?: string;
   ADMIN_SECRET?: string;
-  DATABASE_URL?: string;
 }

@@ -3,7 +3,7 @@
 import { z } from 'zod';
 import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
-import { prisma } from '@/lib/prisma';
+import { getPrisma } from '@/lib/prisma';
 import { isNaverMapUrl, sanitizeUrl } from '@/lib/naver-parser';
 import { enrichNaverUrl } from '@/lib/naver-enrichment';
 import { checkRateLimit, incrementQuota } from '@/lib/rate-limit';
@@ -14,8 +14,8 @@ const Schema = z.object({
   sourceUrl: z.string().url('올바른 URL 형식이 아닙니다.').max(2000),
 });
 
-function getFingerprint(): string {
-  const h = headers();
+async function getFingerprint(): Promise<string> {
+  const h = await headers(); // Next.js 15: headers() is async
   return (
     h.get('x-forwarded-for')?.split(',')[0]?.trim() ??
     h.get('x-real-ip') ??
@@ -24,6 +24,8 @@ function getFingerprint(): string {
 }
 
 export async function submitStore(data: unknown): Promise<SubmitStoreResult> {
+  const db = await getPrisma();
+
   // 1. Validate input
   const parsed = Schema.safeParse(data);
   if (!parsed.success) {
@@ -38,7 +40,7 @@ export async function submitStore(data: unknown): Promise<SubmitStoreResult> {
   }
 
   // 3. Rate limit
-  const fingerprint = getFingerprint();
+  const fingerprint = await getFingerprint();
   const { allowed } = await checkRateLimit(fingerprint);
   if (!allowed) {
     return {
@@ -48,20 +50,20 @@ export async function submitStore(data: unknown): Promise<SubmitStoreResult> {
   }
 
   // 4. Verify food trend exists
-  const trend = await prisma.foodTrend.findUnique({ where: { id: foodTrendId } });
+  const trend = await db.foodTrend.findUnique({ where: { id: foodTrendId } });
   if (!trend) {
     return { success: false, error: '존재하지 않는 트렌드입니다.' };
   }
 
   // 5. Duplicate check
-  const existing = await prisma.storeSubmission.findUnique({
+  const existing = await db.storeSubmission.findUnique({
     where: { foodTrendId_sourceUrl: { foodTrendId, sourceUrl } },
   });
   if (existing) {
     return { success: false, error: '이미 등록된 링크입니다.' };
   }
 
-  // 6. Best-effort enrichment (non-blocking)
+  // 6. Best-effort enrichment (never blocks submission)
   let enriched;
   try {
     enriched = await enrichNaverUrl(sourceUrl);
@@ -83,11 +85,11 @@ export async function submitStore(data: unknown): Promise<SubmitStoreResult> {
     // verificationConfidence: null,
     // verificationNote: null,
     // llmCheckedAt: null,
-    // foodTrendSlug: trend.slug,  // for LLM context
+    // foodTrendSlug: trend.slug,
   };
 
   // 7. Persist
-  const store = await prisma.storeSubmission.create({
+  const store = await db.storeSubmission.create({
     data: {
       foodTrendId,
       sourceUrl,

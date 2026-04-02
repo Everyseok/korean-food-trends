@@ -1,11 +1,12 @@
-import { prisma } from '@/lib/prisma';
+import { getPrisma } from '@/lib/prisma';
 import { FoodTrendTimeline } from '@/components/FoodTrendTimeline';
 import type { FoodTrendData } from '@/types';
 
 export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
-  const rawTrends = await prisma.foodTrend.findMany({
+  const db = await getPrisma();
+  const rawTrends = await db.foodTrend.findMany({
     where: { visible: true },
     orderBy: [
       { trendStartYear: 'asc' },
