@@ -1,12 +1,15 @@
 'use server';
 
+import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { getPrisma } from '@/lib/prisma';
 
-export async function verifyAdminToken(token: string): Promise<boolean> {
+async function verifyAdmin(): Promise<boolean> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('admin_token')?.value;
   const envSecret = process.env.ADMIN_SECRET ?? 'admin-dev-secret';
-  return token === envSecret;
+  return !!token && token === envSecret;
 }
 
 const TrendSchema = z.object({
@@ -27,10 +30,9 @@ export type AdminTrendResult =
   | { success: false; error: string };
 
 export async function adminCreateTrend(
-  adminToken: string,
   data: unknown
 ): Promise<AdminTrendResult> {
-  if (!(await verifyAdminToken(adminToken))) {
+  if (!(await verifyAdmin())) {
     return { success: false, error: '인증 실패' };
   }
   const parsed = TrendSchema.safeParse(data);
@@ -49,11 +51,10 @@ export async function adminCreateTrend(
 }
 
 export async function adminUpdateTrend(
-  adminToken: string,
   id: string,
   data: unknown
 ): Promise<AdminTrendResult> {
-  if (!(await verifyAdminToken(adminToken))) {
+  if (!(await verifyAdmin())) {
     return { success: false, error: '인증 실패' };
   }
   const parsed = TrendSchema.safeParse(data);
@@ -68,11 +69,10 @@ export async function adminUpdateTrend(
 }
 
 export async function adminToggleVisible(
-  adminToken: string,
   id: string,
   visible: boolean
 ): Promise<AdminTrendResult> {
-  if (!(await verifyAdminToken(adminToken))) {
+  if (!(await verifyAdmin())) {
     return { success: false, error: '인증 실패' };
   }
   const db = await getPrisma();

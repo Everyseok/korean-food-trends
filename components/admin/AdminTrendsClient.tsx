@@ -74,11 +74,6 @@ export function AdminTrendsClient({ trends: initial }: { trends: TrendRow[] }) {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
 
-  const getToken = () => {
-    if (typeof document === 'undefined') return '';
-    return document.cookie.split(';').find(c => c.trim().startsWith('admin_token='))?.split('=')[1]?.trim() ?? '';
-  };
-
   const flash = (m: string) => { setMsg(m); setTimeout(() => setMsg(''), 3000); };
 
   const startEdit = (t: TrendRow) => {
@@ -93,7 +88,7 @@ export function AdminTrendsClient({ trends: initial }: { trends: TrendRow[] }) {
   const saveEdit = async () => {
     if (!editingId) return;
     setSaving(true);
-    const result = await adminUpdateTrend(getToken(), editingId, editForm);
+    const result = await adminUpdateTrend(editingId, editForm);
     setSaving(false);
     if (result.success) {
       setTrends(prev => prev.map(t => t.id === editingId ? { ...t, ...editForm } : t));
@@ -106,7 +101,7 @@ export function AdminTrendsClient({ trends: initial }: { trends: TrendRow[] }) {
 
   const saveNew = async () => {
     setSaving(true);
-    const result = await adminCreateTrend(getToken(), newForm);
+    const result = await adminCreateTrend(newForm);
     setSaving(false);
     if (result.success) {
       setShowNew(false);
@@ -118,7 +113,7 @@ export function AdminTrendsClient({ trends: initial }: { trends: TrendRow[] }) {
   };
 
   const toggleVisible = async (t: TrendRow) => {
-    const result = await adminToggleVisible(getToken(), t.id, !t.visible);
+    const result = await adminToggleVisible(t.id, !t.visible);
     if (result.success) {
       setTrends(prev => prev.map(r => r.id === t.id ? { ...r, visible: !r.visible } : r));
     }
