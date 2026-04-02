@@ -10,10 +10,12 @@ export function EmptyState({ onAddStore }: Props) {
   return (
     <button
       onClick={onAddStore}
-      className="w-full flex flex-col items-center gap-1.5 py-4 px-3 rounded-xl border border-dashed border-[#E5E5EA] text-[#C7C7CC] hover:text-[#AEAEB2] hover:border-[#D1D1D6] transition-colors group"
+      className="w-full flex items-center gap-2 py-2 px-0 text-left group"
     >
-      <MapPin className="w-4 h-4 group-hover:text-[#8E8E93] transition-colors" />
-      <span className="text-[11px] font-medium">첫 판매점을 등록해보세요</span>
+      <MapPin className="w-3.5 h-3.5 text-[#D1D1D6] group-hover:text-[#AEAEB2] transition-colors duration-150 flex-shrink-0" />
+      <span className="text-[11px] text-[#C7C7CC] group-hover:text-[#8E8E93] transition-colors duration-150">
+        첫 판매점 등록
+      </span>
     </button>
   );
 }

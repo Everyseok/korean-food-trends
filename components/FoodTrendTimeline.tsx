@@ -13,6 +13,10 @@ interface Props {
   trends: FoodTrendData[];
 }
 
+type TimelineItem =
+  | { type: 'year'; year: number }
+  | { type: 'trend'; trend: FoodTrendData };
+
 export function FoodTrendTimeline({ trends }: Props) {
   const [selectedTrend, setSelectedTrend] = useState<FoodTrendData | null>(null);
   const [addingForTrend, setAddingForTrend] = useState<FoodTrendData | null>(null);
@@ -59,79 +63,154 @@ export function FoodTrendTimeline({ trends }: Props) {
     });
   };
 
-  // Group by year for roadmap headers
   const years = Array.from(new Set(optimisticTrends.map(t => t.trendStartYear))).sort();
+  const items: TimelineItem[] = [];
+  for (const year of years) {
+    items.push({ type: 'year', year });
+    optimisticTrends
+      .filter(t => t.trendStartYear === year)
+      .forEach(t => items.push({ type: 'trend', trend: t }));
+  }
 
   return (
-    <>
-      {/* Page header */}
-      <header className="px-6 pt-16 pb-10">
-        <div className="max-w-7xl mx-auto px-2">
-          <p className="text-xs font-semibold tracking-widest text-[#8E8E93] uppercase mb-3">
-            Food Trends
+    <div className="bg-[#F5F5F7] min-h-screen">
+
+      {/* ── Hero ─────────────────────────────────────────────── */}
+      <header className="pt-[96px] pb-16 px-6 select-none">
+        <div className="max-w-lg mx-auto text-center">
+          <p className="timeline-eyebrow block mb-5">
+            K-Food Trends
           </p>
-          <h1 className="text-4xl md:text-5xl font-semibold text-[#1D1D1F] tracking-tight leading-tight">
-            대유행은 어디까지 갈까?
+          <h1 className="timeline-hero-title">
+            대유행은<br />어디까지 갈까?
           </h1>
-          <p className="mt-3 text-[#6E6E73] text-lg max-w-xl">
-            2020년부터 지금까지, 한국을 달군 음식 트렌드의 타임라인.
+          <p className="mt-5 text-[16px] leading-[1.7] text-[#6E6E73] max-w-xs mx-auto">
+            2020년부터 지금까지,<br />한국을 달군 음식 트렌드.
           </p>
+        </div>
+        {/* Decorative axis */}
+        <div className="mt-14 flex items-center justify-center gap-3.5">
+          <div className="h-px w-10 bg-[#E5E5EA]" />
+          <div className="w-[3px] h-[3px] rounded-full bg-[#D1D1D6]" />
+          <div className="h-px w-10 bg-[#E5E5EA]" />
         </div>
       </header>
 
-      {/* Timeline — one row per year */}
-      <div className="pb-20">
-        {years.map(year => {
-          const yearTrends = optimisticTrends.filter(t => t.trendStartYear === year);
-          return (
-            <section key={year} className="mb-10">
-              {/* Year label */}
-              <div className="px-6 md:px-8 mb-4">
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl font-semibold text-[#1D1D1F] tracking-tight">
-                    {year}
-                  </span>
-                  <div className="flex-1 h-px bg-[#E5E5EA]" />
-                </div>
-              </div>
-
-              {/* Horizontal scroll row for this year */}
-              <div className="timeline-scroll overflow-x-auto">
-                <div
-                  className="flex gap-5 px-6 md:px-8"
-                  style={{ minWidth: 'max-content', paddingBottom: '2px' }}
-                >
-                  {yearTrends.map((trend, index) => (
-                    <div key={trend.id} className="w-72 flex-shrink-0 flex flex-col">
-                      {/* Position within year */}
-                      <div className="flex items-center gap-2 mb-3">
-                        <span className="text-[10px] font-semibold text-[#C7C7CC] tracking-wide">
-                          {String(trend.trendStartMonth).padStart(2, '0')}월
-                        </span>
-                        <div
-                          className={`h-px flex-1 ${index < yearTrends.length - 1 ? 'bg-[#E5E5EA]' : 'bg-transparent'}`}
-                        />
-                      </div>
-
-                      <FoodTrendCard
-                        trend={trend}
-                        onOpenDetail={() => setSelectedTrend(trend)}
-                        onAddStore={() => setAddingForTrend(trend)}
-                      />
-
-                      <StoreList
-                        stores={trend.stores}
-                        onAddStore={() => setAddingForTrend(trend)}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </section>
-          );
-        })}
+      {/* ── Scroll hint label ────────────────────────────────── */}
+      <div className="flex justify-center mb-6">
+        <p className="text-[10px] font-medium tracking-[0.15em] text-[#C7C7CC] uppercase select-none">
+          2020 →
+        </p>
       </div>
 
+      {/* ── Timeline ─────────────────────────────────────────── */}
+      <div
+        className="timeline-scroll overflow-x-auto"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
+        {/* Relative wrapper — must be max-content wide for absolute rail to span correctly */}
+        <div
+          className="relative"
+          style={{ minWidth: 'max-content', padding: '0 72px 96px' }}
+        >
+          {/* Rail — absolute, spans full content width */}
+          <div
+            className="absolute pointer-events-none"
+            style={{
+              top: '34px',
+              left: '72px',
+              right: '72px',
+              height: '1px',
+              background: '#E8E8ED',
+            }}
+          />
+
+          {/* Single horizontal flex row */}
+          <div className="flex items-start">
+            {items.map((item, idx) => {
+              /* ── Year marker ── */
+              if (item.type === 'year') {
+                const isFirst = idx === 0;
+                return (
+                  <div
+                    key={`y-${item.year}`}
+                    className="flex-shrink-0"
+                    style={{ marginRight: '10px', marginLeft: isFirst ? '0' : '36px' }}
+                  >
+                    <div
+                      className="relative z-10 rounded-full px-3 py-[3px] whitespace-nowrap"
+                      style={{
+                        marginTop: '25px',
+                        background: '#F5F5F7',
+                        border: '1px solid #E8E8ED',
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: '10px',
+                          fontWeight: 600,
+                          letterSpacing: '0.12em',
+                          color: '#8E8E93',
+                        }}
+                      >
+                        {item.year}
+                      </span>
+                    </div>
+                  </div>
+                );
+              }
+
+              /* ── Trend node ── */
+              const trend = item.trend;
+              return (
+                <div
+                  key={trend.id}
+                  className="relative flex-shrink-0"
+                  style={{ width: '228px', marginRight: '18px' }}
+                >
+                  {/* Rail dot */}
+                  <div
+                    className="absolute z-10 rounded-full bg-white"
+                    style={{
+                      width: '7px',
+                      height: '7px',
+                      border: '1.5px solid #C7C7CC',
+                      top: '30.5px',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                    }}
+                  />
+                  {/* Stem */}
+                  <div
+                    className="absolute bg-[#EBEBEB]"
+                    style={{
+                      width: '1px',
+                      top: '37.5px',
+                      height: '20px',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                    }}
+                  />
+                  {/* Content */}
+                  <div style={{ paddingTop: '58px' }}>
+                    <FoodTrendCard
+                      trend={trend}
+                      onOpenDetail={() => setSelectedTrend(trend)}
+                      onAddStore={() => setAddingForTrend(trend)}
+                    />
+                    <StoreList
+                      stores={trend.stores}
+                      onAddStore={() => setAddingForTrend(trend)}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Modals ───────────────────────────────────────────── */}
       {selectedTrend && (
         <FoodTrendDetailModal
           trend={selectedTrend}
@@ -152,6 +231,6 @@ export function FoodTrendTimeline({ trends }: Props) {
       )}
 
       {toast && <SubmissionToast toast={toast} />}
-    </>
+    </div>
   );
 }

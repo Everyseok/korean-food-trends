@@ -2,7 +2,6 @@
 
 import { Plus } from 'lucide-react';
 import { StoreListItem } from './StoreListItem';
-import { EmptyState } from './EmptyState';
 import type { StoreSubmissionData } from '@/types';
 
 interface Props {
@@ -11,38 +10,50 @@ interface Props {
 }
 
 export function StoreList({ stores, onAddStore }: Props) {
-  const published = stores.filter(s => s.moderationStatus === 'published');
   const optimistic = stores.filter(s => s.id.startsWith('optimistic-'));
+  const published  = stores.filter(s => s.moderationStatus === 'published');
+  const all        = [...optimistic, ...published];
 
   return (
-    <div className="mt-3 flex flex-col gap-0.5">
-      {/* Section label */}
-      <div className="flex items-center justify-between px-3 mb-1">
-        <span className="text-[11px] font-semibold tracking-wider text-[#C7C7CC] uppercase">
+    <div className="mt-4 px-0.5">
+      {/* Header row */}
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-[10px] font-semibold tracking-[0.14em] uppercase text-[#C7C7CC]">
           판매점
         </span>
         <button
           onClick={onAddStore}
-          className="flex items-center gap-0.5 text-[11px] text-[#AEAEB2] hover:text-[#6E6E73] transition-colors"
+          className="flex items-center gap-0.5 text-[#AEAEB2] hover:text-[#6E6E73] transition-colors duration-150"
           aria-label="판매점 추가"
         >
           <Plus className="w-3 h-3" />
-          추가
+          <span className="text-[10px] font-medium">추가</span>
         </button>
       </div>
 
-      {/* Optimistic (pending) items shown first */}
-      {optimistic.map(store => (
-        <StoreListItem key={store.id} store={store} isOptimistic />
-      ))}
-
-      {/* Confirmed stores */}
-      {published.length === 0 && optimistic.length === 0 ? (
-        <EmptyState onAddStore={onAddStore} />
+      {all.length === 0 ? (
+        /* Minimal empty state */
+        <button
+          onClick={onAddStore}
+          className="w-full flex items-center gap-2 py-2 px-0 text-left group"
+        >
+          <div className="w-4 h-4 rounded-full border border-[#E5E5EA] flex items-center justify-center flex-shrink-0 group-hover:border-[#C7C7CC] transition-colors duration-150">
+            <Plus className="w-2.5 h-2.5 text-[#D1D1D6] group-hover:text-[#AEAEB2] transition-colors duration-150" />
+          </div>
+          <span className="text-[11px] text-[#C7C7CC] group-hover:text-[#8E8E93] transition-colors duration-150">
+            첫 판매점 등록
+          </span>
+        </button>
       ) : (
-        published.map(store => (
-          <StoreListItem key={store.id} store={store} />
-        ))
+        <div>
+          {all.map(store => (
+            <StoreListItem
+              key={store.id}
+              store={store}
+              isOptimistic={store.id.startsWith('optimistic-')}
+            />
+          ))}
+        </div>
       )}
     </div>
   );

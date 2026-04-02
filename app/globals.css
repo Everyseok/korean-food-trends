@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Apple-like smooth font rendering */
+/* ── Font rendering ──────────────────────────────────────── */
 body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -10,15 +10,32 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Horizontal timeline scroll – thin, subtle scrollbar */
+/* ── Hero typography ─────────────────────────────────────── */
+.timeline-eyebrow {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  color: #AEAEB2;
+  text-transform: uppercase;
+}
+
+.timeline-hero-title {
+  font-size: clamp(2.6rem, 6.5vw, 4.25rem);
+  font-weight: 600;
+  color: #1D1D1F;
+  letter-spacing: -0.025em;
+  line-height: 1.06;
+}
+
+/* ── Timeline scrollbar — ultra-thin ────────────────────── */
 .timeline-scroll {
   scrollbar-width: thin;
-  scrollbar-color: #d1d1d6 transparent;
+  scrollbar-color: #D1D1D6 transparent;
   -webkit-overflow-scrolling: touch;
 }
 
 .timeline-scroll::-webkit-scrollbar {
-  height: 4px;
+  height: 3px;
 }
 
 .timeline-scroll::-webkit-scrollbar-track {
@@ -26,14 +43,14 @@ body {
 }
 
 .timeline-scroll::-webkit-scrollbar-thumb {
-  background: #d1d1d6;
+  background: #D1D1D6;
   border-radius: 2px;
 }
 
-/* Modal backdrop blur */
+/* ── Modal backdrop ──────────────────────────────────────── */
 .modal-backdrop {
-  backdrop-filter: blur(12px) saturate(180%);
-  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
 }
 
 /* Prevent body scroll when modal is open */
