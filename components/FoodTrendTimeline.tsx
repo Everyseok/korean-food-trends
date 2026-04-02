@@ -71,7 +71,7 @@ export function FoodTrendTimeline({ trends }: Props) {
             Food Trends
           </p>
           <h1 className="text-4xl md:text-5xl font-semibold text-[#1D1D1F] tracking-tight leading-tight">
-            한국 푸드 트렌드
+            대유행은 어디까지 갈까?
           </h1>
           <p className="mt-3 text-[#6E6E73] text-lg max-w-xl">
             2020년부터 지금까지, 한국을 달군 음식 트렌드의 타임라인.
